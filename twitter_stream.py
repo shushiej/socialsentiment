@@ -26,10 +26,10 @@ analyzer = SentimentIntensityAnalyzer()
 
 #consumer key, consumer secret, access token, access secret.
 # https://apps.twitter.com/ to setup
-ckey=""
-csecret=""
-atoken=""
-asecret="
+ckey = os.environ.get("CONSUMER_API_KEY")
+csecret = os.environ.get("CONSUMER_SECRET")
+atoken = os.environ.get("ACCESS_TOKEN")
+asecret = os.environ.get("ACCESS_TOKEN_SECRET")
 # isolation lever disables automatic transactions,
 # we are disabling thread check as we are creating connection here, but we'll be inserting from a separate thread (no need for serialization)
 conn = sqlite3.connect('twitter.db', isolation_level=None, check_same_thread=False)

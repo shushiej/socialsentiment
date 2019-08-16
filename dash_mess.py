@@ -29,19 +29,19 @@ punctuation = [str(i) for i in string.punctuation]
 
 
 
-sentiment_colors = {-1:"#EE6055",
-                    -0.5:"#FDE74C",
-                     0:"#FFE6AC",
-                     0.5:"#D0F2DF",
-                     1:"#9CEC5B",}
+sentiment_colors = {-1:"#E31D2E",
+                    -0.5:"#E9576B",
+                     0:"#AAB8C2",
+                     0.5:"#B4E55C",
+                     1:"#99D815",}
 
 
 app_colors = {
-    'background': '#0C0F0A',
-    'text': '#FFFFFF',
-    'sentiment-plot':'#41EAD4',
-    'volume-bar':'#FBFC74',
-    'someothercolor':'#FF206E',
+    'background': '#F5F8FA',
+    'text': '#14171A',
+    'sentiment-plot':'#657786',
+    'volume-bar':'#1DA1F2',
+    'someothercolor':'#14171A',
 }
 
 POS_NEG_NEUT = 0.1
@@ -50,8 +50,8 @@ MAX_DF_LENGTH = 100
 
 app = dash.Dash(__name__)
 app.layout = html.Div(
-    [   html.Div(className='container-fluid', children=[html.H2('Live Twitter Sentiment', style={'color':"#CECECE"}),
-                                                        html.H5('Search:', style={'color':app_colors['text']}),
+    [   html.Div(className='container-fluid', children=[html.H1('Live Twitter Sentiment'),
+                                                        html.H5('Search:'),
                                                   dcc.Input(id='sentiment_term', value='twitter', type='text', style={'color':app_colors['someothercolor']}),
                                                   ],
                  style={'width':'98%','margin-left':10,'margin-right':10,'max-width':50000}),
@@ -59,7 +59,7 @@ app.layout = html.Div(
         
         
         html.Div(className='row', children=[html.Div(id='related-sentiment', children=html.Button('Loading related terms...', id='related_term_button'), className='col s12 m6 l6', style={"word-wrap":"break-word"}),
-                                            html.Div(id='recent-trending', className='col s12 m6 l6', style={"word-wrap":"break-word"})]),
+                                            html.Div(id='recent-trending', className='col s12 m6 l6 span_words', style={"word-wrap":"break-word"})]),
 
         html.Div(className='row', children=[html.Div(dcc.Graph(id='live-graph', animate=False), className='col s12 m6 l6'),
                                             html.Div(dcc.Graph(id='historical-graph', animate=False), className='col s12 m6 l6')]),
@@ -157,37 +157,29 @@ def quick_color(s):
     # except return bg as app_colors['background']
     if s >= POS_NEG_NEUT:
         # positive
-        return "#002C0D"
+        return "#99D815"
     elif s <= -POS_NEG_NEUT:
         # negative:
-        return "#270000"
+        return "#E31D2E"
 
     else:
-        return app_colors['background']
+        return "#1E1E2C"
 
-def generate_table(df, max_rows=10):
-    return html.Table(className="responsive-table",
-                      children=[
-                          html.Thead(
-                              html.Tr(
-                                  children=[
-                                      html.Th(col.title()) for col in df.columns.values],
-                                  style={'color':app_colors['text']}
-                                  )
-                              ),
-                          html.Tbody(
+def generate_table(df, max_rows=30):
+    return html.Div(children=[
+                        html.H3("Tweets by Sentiment"),
+                          html.Div(
                               [
                                   
-                              html.Tr(
+                              html.Blockquote(
                                   children=[
-                                      html.Td(data) for data in d
-                                      ], style={'color':app_colors['text'],
-                                                'background-color':quick_color(d[2])}
+                                      html.P(d[1]),
+                                      html.Span(d[0].strftime("%d/%m/%Y")),
+                                      ], style={'box-shadow': ' 1px 1px 4px' + quick_color(d[2])}, className = "row twitter-tweet"
                                   )
-                               for d in df.values.tolist()])
+                               for d in df.values.tolist()], className = "tweet_storm")
                           ]
     )
-
 
 def pos_neg_neutral(col):
     if col >= POS_NEG_NEUT:
@@ -244,7 +236,7 @@ def update_pie_chart(sentiment_term):
     
     
     values = [pos,neg]
-    colors = ['#007F25', '#800000']
+    colors = ['#99D815', '#E31D2E']
 
     trace = go.Pie(labels=labels, values=values,
                    hoverinfo='label+percent', textinfo='value', 
@@ -417,10 +409,11 @@ def update_related_terms(sentiment_term):
         smin = min(sizes)
         smax = max(sizes) - smin  
 
-        buttons = [html.H5('Terms related to "{}": '.format(sentiment_term), style={'color':app_colors['text']})]+[html.Span(term, style={'color':sentiment_colors[round(related_terms[term][0]*2)/2],
+        buttons = [html.H5('Terms related to "{}": '.format(sentiment_term), style={'color':app_colors['text']})]+[html.Span(term, className = "chip",  style={'background-color':sentiment_colors[round(related_terms[term][0]*2)/2],
                                                               'margin-right':'15px',
                                                               'margin-top':'15px',
-                                                              'font-size':'{}%'.format(generate_size(related_terms[term][1], smin, smax))}) for term in related_terms]
+                                                              'color' : '#FFFFFF',
+                                                              'font-size':'15px'}) for term in related_terms]
 
 
         return buttons
@@ -467,10 +460,11 @@ def update_recent_trending(sentiment_term):
         smin = min(sizes)
         smax = max(sizes) - smin  
 
-        buttons = [html.H5('Recently Trending Terms: ', style={'color':app_colors['text']})]+[html.Span(term, style={'color':sentiment_colors[round(related_terms[term][0]*2)/2],
+        buttons = [html.H5('Recently Trending Terms: ', style={'color':app_colors['text']})]+[html.Span(term, className = "chip",  style={'background-color':sentiment_colors[round(related_terms[term][0]*2)/2],
                                                               'margin-right':'15px',
                                                               'margin-top':'15px',
-                                                              'font-size':'{}%'.format(generate_size(related_terms[term][1], smin, smax))}) for term in related_terms]
+                                                              'color' : '#FFFFFF',
+                                                              'font-size':'15px'}) for term in related_terms]
 
 
         return buttons
